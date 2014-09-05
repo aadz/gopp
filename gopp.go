@@ -48,7 +48,7 @@ var (
 	GREYLIST           bool          = false
 	GREYLIST_DELAY     int64         = 300
 	GREYLIST_EXPIRE    int64         = 14400
-	LOG_DEBUG          bool          = true
+	LOG_DEBUG          bool          = false
 	STAT_INTERVAL      time.Duration = 0
 )
 

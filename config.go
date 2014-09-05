@@ -23,7 +23,7 @@ import (
 // Global vars
 var (
 	_cfg = map[string]string{
-		"debug":             "yes",
+		"debug":             "no",
 		"grey_listing":      "no",
 		"grey_list_delay":   "300",
 		"greylist_exceptions": "-none-",

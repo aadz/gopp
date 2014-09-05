@@ -1,4 +1,4 @@
 gopp
 ====
 
-Postfix policy application written in Go
+Simple Postfix policy application written in Go.
