@@ -25,9 +25,9 @@ import (
 const (
 	CLEANER_INTERVAL      time.Duration = 300 * time.Second
 	DEFAULT_ACTION        string        = "DUNNO"
-	GREYLIST_DEFER_ACTION               = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
+	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
-	PROG_NAME             string        = "policyd"
+	PROG_NAME             string        = "gopp"
 	VERSION string = "0.2.3-20-ge5d5302"
 )
 
