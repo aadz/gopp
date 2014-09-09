@@ -25,30 +25,30 @@ import (
 const (
 	CLEANER_INTERVAL      time.Duration = 300 * time.Second
 	DEFAULT_ACTION        string        = "DUNNO"
-	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
+	GREYLIST_DEFER_ACTION               = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
 	PROG_NAME             string        = "gopp"
-	VERSION string = "0.2.3-20-ge5d5302"
+	VERSION               string        = "0.2.3-21-g0a04fe2"
 )
 
 // Global vars
 var (
-	_cfg_file_name     string = "/etc/postfix/policyd.cfg"
-	_conn_cnt          uint   = 0
+	_cfg_file_name     string = "/etc/postfix/gopp.cfg"
+	_conn_cnt          uint
 	_hostname          string
 	_go_routines_run   map[string]byte  = make(map[string]byte)
 	_grey_map          map[uint64]int64 = make(map[uint64]int64)
 	_mc                *memcache.Client
 	_PID               int
-	_progname          string        = "policyd"
-	_requests_cnt      uint          = 0
+	_progname          string = "policyd"
+	_requests_cnt      uint
 	_requests_duration time.Duration = 0
 	_syslog            *syslog.Writer
 	CRC64_TABLE        *crc64.Table
 	GREYLIST           bool          = false
 	GREYLIST_DELAY     int64         = 300
 	GREYLIST_EXPIRE    int64         = 14400
-	LOG_DEBUG          bool          = false
+	LOG_DEBUG          bool          = true
 	STAT_INTERVAL      time.Duration = 0
 )
 
@@ -65,7 +65,7 @@ func main() {
 
 	laddr := _cfg["listen_ip"] + ":" + _cfg["listen_port"]
 	l, err := net.Listen("tcp", laddr)
-	_check(&err)	// or die
+	_check(&err)    // or die
 	defer l.Close() // Close the listener when the application closes.
 	_log_debug("listening on " + laddr)
 
@@ -81,7 +81,7 @@ func main() {
 }
 
 func check_grey(pRMap *map[string]string) string {
-	msg_key := crc64.Checksum([]byte(str.ToLower((*pRMap)["sender"] + (*pRMap)["recipient"]) + (*pRMap)["client_address"]),
+	msg_key := crc64.Checksum([]byte(str.ToLower((*pRMap)["sender"]+(*pRMap)["recipient"])+(*pRMap)["client_address"]),
 		CRC64_TABLE)
 
 	if LOG_DEBUG {
@@ -224,7 +224,7 @@ func clean_grey_map() {
 		_grey_map_mutex.Lock()
 		start_time := time.Now()
 		for key, val := range _grey_map {
-			if now - val > GREYLIST_EXPIRE {
+			if now-val > GREYLIST_EXPIRE {
 				delete(_grey_map, key)
 				deleted++
 			}
@@ -271,7 +271,7 @@ func handle_requests(conn net.Conn) {
 				if len(msg_map) > 0 {
 					conn.Write([]byte(fmt.Sprintf("action=%v\n\n", policy_check(&msg_map))))
 				}
-				if STAT_INTERVAL > 0 {	// update global counters
+				if STAT_INTERVAL > 0 { // update global counters
 					d := time.Now().Sub(start_time)
 					_requests_cntavg_mutex.Lock()
 					_requests_duration += d

@@ -23,18 +23,18 @@ import (
 // Global vars
 var (
 	_cfg = map[string]string{
-		"debug":             "no",
-		"grey_listing":      "no",
-		"grey_list_delay":   "300",
+		"debug":               "yes",
+		"grey_listing":        "no",
+		"grey_list_delay":     "300",
 		"greylist_exceptions": "-none-",
-		"grey_list_expire":  "14400",
-		"grey_list_store":   "internal",
-		"listen_ip":         "127.0.0.1",
-		"listen_port":       "10033",
-		"log":               "syslog",
-		"memcached_servers": "127.0.0.1:11211",
-		"stat_interval":     "0",
-		"user":              "-none-",
+		"grey_list_expire":    "14400",
+		"grey_list_store":     "internal",
+		"listen_ip":           "127.0.0.1",
+		"listen_port":         "10033",
+		"log":                 "syslog",
+		"memcached_servers":   "127.0.0.1:11211",
+		"stat_interval":       "0",
+		"user":                "-none-",
 	}
 )
 
