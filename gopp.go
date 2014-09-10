@@ -28,7 +28,7 @@ const (
 	GREYLIST_DEFER_ACTION               = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
 	PROG_NAME             string        = "gopp"
-	VERSION               string        = "0.2.3-21-g0a04fe2"
+	VERSION               string        = "0.2.3-25-g81e6fd1"
 )
 
 // Global vars
@@ -60,9 +60,23 @@ var (
 	_requests_cntavg_mutex sync.Mutex // used for _requests_cnt and _requests_duration
 )
 
-func main() {
-	init_prog()
+func init() {
+	var err error
 
+	_PID = os.Getpid()
+	_hostname, err = os.Hostname()
+	if err != nil {
+		_log_debug("Cannot find the host name, 'localhost' assumed")
+		_hostname = "localhost"
+	}
+
+	flag.StringVar(&_cfg_file_name, "c", _cfg_file_name, "configuration file name")
+	flag.Parse()
+
+	read_config()
+}
+
+func main() {
 	laddr := _cfg["listen_ip"] + ":" + _cfg["listen_port"]
 	l, err := net.Listen("tcp", laddr)
 	_check(&err)    // or die
@@ -80,19 +94,19 @@ func main() {
 	}
 }
 
-func check_grey(pRMap *map[string]string) string {
-	msg_key := crc64.Checksum([]byte(str.ToLower((*pRMap)["sender"]+(*pRMap)["recipient"])+(*pRMap)["client_address"]),
+func check_grey(rMap map[string]string) string {
+	msg_key := crc64.Checksum([]byte(str.ToLower(rMap["sender"]+rMap["recipient"])+rMap["client_address"]),
 		CRC64_TABLE)
 
 	if LOG_DEBUG {
 		// Queue ID can be empty in policy request.
 		qid := ""
-		if len((*pRMap)["queue_id"]) > 0 {
-			qid = (*pRMap)["queue_id"] + ": "
+		if len(rMap["queue_id"]) > 0 {
+			qid = rMap["queue_id"] + ": "
 		}
 		_log(fmt.Sprintf(
 			"%vgrey list check: client %v, sender %v, recipient %v, checksum %x",
-			qid, (*pRMap)["client_address"], (*pRMap)["sender"], (*pRMap)["recipient"], msg_key))
+			qid, rMap["client_address"], rMap["sender"], rMap["recipient"], msg_key))
 	}
 
 	switch _cfg["grey_list_store"] {
@@ -176,12 +190,11 @@ func check_grey_memcached(key string) string {
 	return action
 }
 
-func check_RCPT(pRMap *map[string]string) string {
-	/*	pRMap is a policy request pointer */
+func check_RCPT(rMap map[string]string) string {
 	_log_debug("Check on RCPT state")
 
 	if GREYLIST {
-		res := check_grey(pRMap)
+		res := check_grey(rMap)
 		if res != DEFAULT_ACTION {
 			return res
 		}
@@ -269,7 +282,7 @@ func handle_requests(conn net.Conn) {
 				}
 				msg_map := parse_request(&reqStr)
 				if len(msg_map) > 0 {
-					conn.Write([]byte(fmt.Sprintf("action=%v\n\n", policy_check(&msg_map))))
+					conn.Write([]byte(fmt.Sprintf("action=%v\n\n", policy_check(msg_map))))
 				}
 				if STAT_INTERVAL > 0 { // update global counters
 					d := time.Now().Sub(start_time)
@@ -284,21 +297,6 @@ func handle_requests(conn net.Conn) {
 	}
 	_log(fmt.Sprintf("connection closed from %v after %v req sent",
 		conn.RemoteAddr(), request_cnt))
-}
-
-func init_prog() {
-	var err error
-
-	_PID = os.Getpid()
-	_hostname, err = os.Hostname()
-	if err != nil {
-		_log_debug("Cannot find the host name, 'localhost' assumed")
-		_hostname = "localhost"
-	}
-	flag.StringVar(&_cfg_file_name, "c", _cfg_file_name, "configuration file name")
-	flag.Parse()
-
-	read_config()
 }
 
 func mc_get(key string) *memcache.Item {
@@ -339,8 +337,8 @@ func parse_request(pMsg *string) map[string]string {
 	return req
 }
 
-func policy_check(pRMap *map[string]string) string {
-	req_type, ok := (*pRMap)["request"]
+func policy_check(rMap map[string]string) string {
+	req_type, ok := rMap["request"]
 	if ok == false || req_type != "smtpd_access_policy" {
 		_log("policy request type unknown")
 		return ""
@@ -348,11 +346,11 @@ func policy_check(pRMap *map[string]string) string {
 
 	action := DEFAULT_ACTION
 
-	switch (*pRMap)["protocol_state"] {
+	switch rMap["protocol_state"] {
 	case "RCPT":
-		action = check_RCPT(pRMap)
+		action = check_RCPT(rMap)
 	default:
-		_log("unknown or unsuported protocol state ", (*pRMap)["protocol_state"])
+		_log("unknown or unsuported protocol state ", rMap["protocol_state"])
 	}
 	return action
 }
