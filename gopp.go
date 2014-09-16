@@ -28,7 +28,7 @@ const (
 	GREYLIST_DEFER_ACTION               = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
 	PROG_NAME             string        = "gopp"
-	VERSION               string        = "0.2.3-25-g81e6fd1"
+	VERSION string = "0.2.3-26-g344aaa8"
 )
 
 // Global vars
@@ -99,8 +99,7 @@ func check_grey(rMap map[string]string) string {
 		CRC64_TABLE)
 
 	if LOG_DEBUG {
-		// Queue ID can be empty in policy request.
-		qid := ""
+		qid := "" // Queue ID can be empty in policy request.
 		if len(rMap["queue_id"]) > 0 {
 			qid = rMap["queue_id"] + ": "
 		}
@@ -115,7 +114,7 @@ func check_grey(rMap map[string]string) string {
 	case "memcached":
 		return check_grey_memcached(fmt.Sprintf("%v%x", GREYLIST_PREFIX, msg_key))
 	}
-	return DEFAULT_ACTION
+	panic(fmt.Errorf("Unknown greylist storage `%v'", _cfg["grey_list_store"]))
 }
 
 func check_grey_internal(key uint64) string {
@@ -411,33 +410,27 @@ func _stat() {
 	_mutex.Lock()
 	_, found := _go_routines_run["_stat"]
 	_mutex.Unlock()
-	if found || STAT_INTERVAL <= 0 {
-		// already run or need no statistics
+	if found || STAT_INTERVAL <= 0 { // already run or need no statistics
 		return
-	} else {
+	} else { // registration
 		_mutex.Lock()
 		_go_routines_run["_stat"] = 1
 		_mutex.Unlock()
 	}
-
 	_log_debug("Stats collector run")
 
 	var (
-		stat_timer           *time.Timer = time.NewTimer(STAT_INTERVAL)
-		conn_cnt             uint
-		requests_cnt         uint
-		requests_duration    time.Duration
-		request_avg_duration time.Duration
-		str_grey_map_cnt     string = ""
+		stat_timer                              *time.Timer = time.NewTimer(STAT_INTERVAL)
+		conn_cnt, requests_cnt                  uint
+		requests_duration, request_avg_duration time.Duration
+		str_grey_map_cnt                        string
 	)
 
 	prev_ts := time.Now() // timestamp
-
 	for {
 		_ = <-stat_timer.C
 		ts := time.Now() // timestamp
 		stat_timer.Reset(STAT_INTERVAL)
-		//interval := float32(ts.Sub(prev_ts).Nanoseconds() / time.Second)
 		interval := float32(ts.Sub(prev_ts) / time.Second)
 		prev_ts = ts
 
@@ -457,7 +450,6 @@ func _stat() {
 
 		if requests_cnt > 0 {
 			request_avg_duration = requests_duration / time.Duration(requests_cnt)
-			//_log_debug(fmt.Sprintf("%v requests processed in %v", requests_cnt, requests_duration))
 		} else {
 			request_avg_duration = 0
 		}
