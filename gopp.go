@@ -28,7 +28,7 @@ const (
 	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
 	PROG_NAME             string        = "gopp"
-	VERSION               string        = "0.2.3-26-g344aaa8"
+	VERSION               string        = "0.2.3-27-g9a95958"
 )
 
 // Global vars
@@ -40,7 +40,6 @@ var (
 	_grey_map          map[uint64]int64 = make(map[uint64]int64)
 	_mc                *memcache.Client
 	_PID               int
-	_progname          string = "policyd"
 	_requests_cnt      uint
 	_requests_duration time.Duration = 0
 	_syslog            *syslog.Writer
@@ -397,7 +396,7 @@ func _log_debug(v ...interface{}) {
 		return
 	}
 	//_log_mutex.Lock()
-	fmt.Printf("%v %v %v[%v]: ", _now(), _hostname, _progname, _PID)
+	fmt.Printf("%v %v %v[%v]: ", _now(), _hostname, PROG_NAME, _PID)
 	fmt.Println(v...)
 	//_log_mutex.Unlock()
 }
