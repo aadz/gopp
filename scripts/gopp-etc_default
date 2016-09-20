@@ -1,0 +1,3 @@
+ENABLED=yes
+SETUID=nobody
+SETGID=nogroup
