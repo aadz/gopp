@@ -17,7 +17,7 @@ and then
 ```bash
 cp scripts/gopp.conf.upstart /etc/init
 ```
-if you prefer Upstart of
+if you prefer Upstart or
 ```bash
 cp scripts/init_d.ubuntu /etc/init.d/gopp
 
