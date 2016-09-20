@@ -2,7 +2,7 @@
 
 ## gopp build and install
 
-Build and install is is a simple process:
+Build and install is a simple process:
 ```bash
 go get github.com/bradfitz/gomemcache/memcache
 sudo make install
