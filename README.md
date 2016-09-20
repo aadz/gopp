@@ -26,7 +26,7 @@ update-rc.d gopp defaults
 in case of System V startup scripts are preferred.
 
 ## Postfix configuration
-Edit /etc/postfix/main.cf and append `check_policy_service` to you `smtpd_recipient_restrictions` checklist. Please note `check_policy_service` should be one of the late element of the `smtpd_recipient_restrictions` list, for example:
+Edit /etc/postfix/main.cf and append `check_policy_service` to the `smtpd_recipient_restrictions` checklist. Please note `check_policy_service` should be one of the late element of the `smtpd_recipient_restrictions` list, for example:
 ```
 smtpd_recipient_restrictions = permit_mynetworks
         permit_sasl_authenticated
