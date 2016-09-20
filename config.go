@@ -40,7 +40,7 @@ var (
 	_local_ip_addrs map[string]bool
 )
 
-func applay_cfg(initial bool, new_cfg map[string]string) {
+func apply_cfg(initial bool, new_cfg map[string]string) {
 	// Set dubug log at first
 	d, found := new_cfg["debug"]
 	if found && _cfg["debug"] != d {
@@ -255,7 +255,7 @@ func read_config() {
 		}
 	}
 
-	applay_cfg(true, new_cfg)
+	apply_cfg(true, new_cfg)
 	_log(fmt.Sprintf("%v %v started, configuration read from %v",
 		PROG_NAME, VERSION, _cfg_file_name))
 }

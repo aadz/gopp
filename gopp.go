@@ -25,7 +25,7 @@ import (
 
 const (
 	PROG_NAME             string        = "gopp"
-	VERSION               string        = "v0.2.4-8-gc74647f"
+	VERSION string = "v0.2.4-15-g24138fc"
 	DEFAULT_CFG_FNAME     string        = "/etc/postfix/gopp.cfg"
 	DEFAULT_ACTION        string        = "DUNNO"
 	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
