@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"log/syslog"
+	"net"
 	"os"
 	"os/user"
 	"strconv"
@@ -36,6 +37,7 @@ var (
 		"stat_interval":       "0",
 		"user":                "-none-",
 	}
+	_local_ip_addrs map[string]bool
 )
 
 func applay_cfg(initial bool, new_cfg map[string]string) {
@@ -132,6 +134,12 @@ func applay_cfg(initial bool, new_cfg map[string]string) {
 				_log_debug("STAT_INTERVAL set to", seconds)
 			}
 		case "user":
+			/* 	This option does not work in Linux since Go v.1,4.
+			https://golang.org/doc/go1.4 says: In the syscall package's implementation
+			on Linux, the Setuid and Setgid have been disabled because those system
+			calls operate on the calling thread, not the whole process, which is
+			different from other platforms and not the expected result.
+			*/
 			if _cfg["user"] != val && val != "-none-" {
 				if initial {
 					uid, err := strconv.Atoi(val)
@@ -155,6 +163,7 @@ func applay_cfg(initial bool, new_cfg map[string]string) {
 	if GREYLIST {
 		//CRC64_TABLE = crc64.MakeTable(0x42F0E1EBA9EA3693)
 		CRC64_TABLE = crc64.MakeTable(crc64.ECMA)
+		_local_ip_addrs = get_local_ips()
 
 		if _cfg["grey_list_store"] == "memcached" {
 			set_mc_client()
@@ -166,8 +175,39 @@ func applay_cfg(initial bool, new_cfg map[string]string) {
 	go _stat()
 }
 
+func get_local_ips() (addresses map[string]bool) {
+	addresses = make(map[string]bool)
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		_log(fmt.Sprintf("Cannot get interfaces list: %v", err))
+		return
+	}
+
+	for _, i := range interfaces {
+		addr, err := i.Addrs()
+		if err != nil {
+			_log(fmt.Sprintf("Cannot get addresses of %v: %v", i.Name, err))
+		}
+		for _, j := range addr {
+			ipAddr, _, _ := net.ParseCIDR(fmt.Sprintf("%v", j))
+			//fmt.Println(addrStr)
+			addresses[ipAddr.String()] = true
+		}
+	}
+
+	if LOG_DEBUG {
+		var addrsStr string
+		for k, _ := range addresses {
+			addrsStr += " " + k
+		}
+		_log_debug(fmt.Sprintf("local IP addresses on the host excluded from greylist check:%v", addrsStr))
+	}
+	return
+}
+
 func parse_cfg_line(line string) (string, string) {
-	l := str.Trim(line, " \t")
+	l := str.TrimSpace(line)
 
 	// strip comments
 	sharpidx := str.Index(l, "#")
@@ -180,8 +220,8 @@ func parse_cfg_line(line string) (string, string) {
 
 	// split by '=' and turn parameter mname to lower case
 	pv := str.SplitN(l, "=", 2)
-	par := str.ToLower(str.Trim(pv[0], " \t"))
-	val := str.Trim(pv[1], "'\", \t")
+	par := str.ToLower(str.TrimSpace(pv[0]))
+	val := str.TrimSpace(str.Trim(pv[1], "'\","))
 	if len(par) == 0 || len(val) == 0 {
 		_log_debug("Error in configuration line: %v", line)
 		return "", ""
@@ -194,7 +234,10 @@ func read_config() {
 
 	// Read configuraton file
 	cfg, err := ioutil.ReadFile(_cfg_file_name)
-	_check(&err)
+	if err != nil {
+		_log("Cannot read configuration file:", err)
+		os.Exit(1)
+	}
 
 	for ln, line := range str.Split(string(cfg), "\n") {
 		par, val := parse_cfg_line(line)

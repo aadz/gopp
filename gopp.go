@@ -14,6 +14,7 @@ import (
 	"log/syslog"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 	str "strings"
 	"sync"
@@ -23,17 +24,18 @@ import (
 )
 
 const (
-	CLEANER_INTERVAL      time.Duration = 300 * time.Second
+	PROG_NAME             string        = "gopp"
+	VERSION               string        = "v0.2.4-8-gc74647f"
+	DEFAULT_CFG_FNAME     string        = "/etc/postfix/gopp.cfg"
 	DEFAULT_ACTION        string        = "DUNNO"
 	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
-	PROG_NAME             string        = "gopp"
-	VERSION               string        = "0.2.3-27-g9a95958"
+	CLEANER_INTERVAL      time.Duration = 300 * time.Second
 )
 
 // Global vars
 var (
-	_cfg_file_name     string = "/etc/postfix/gopp.cfg"
+	_cfg_file_name     string
 	_conn_cnt          uint
 	_hostname          string
 	_go_routines_run   map[string]byte  = make(map[string]byte)
@@ -69,9 +71,7 @@ func init() {
 		_hostname = "localhost"
 	}
 
-	flag.StringVar(&_cfg_file_name, "c", _cfg_file_name, "configuration file name")
-	flag.Parse()
-
+	command_line_get()
 	read_config()
 }
 
@@ -80,6 +80,10 @@ func main() {
 	l, err := net.Listen("tcp", laddr)
 	_check(&err)    // or die
 	defer l.Close() // Close the listener when the application closes.
+
+	if _cfg["grey_listing"] == "yes" {
+		_local_ip_addrs = get_local_ips()
+	}
 	_log_debug("listening on " + laddr)
 
 	for {
@@ -93,18 +97,27 @@ func main() {
 	}
 }
 
-func check_grey(rMap map[string]string) string {
-	msg_key := crc64.Checksum([]byte(str.ToLower(rMap["sender"]+rMap["recipient"])+rMap["client_address"]),
+func check_grey(reqMap map[string]string) string {
+	var client_address = reqMap["client_address"]
+	var recipient = reqMap["recipient"]
+	var sender = reqMap["sender"]
+
+	// Skip checking if client has an IP address local for our host
+	if _local_ip_addrs[client_address] {
+		return DEFAULT_ACTION
+	}
+
+	msg_key := crc64.Checksum([]byte(str.ToLower(sender+recipient)+client_address),
 		CRC64_TABLE)
 
 	if LOG_DEBUG {
-		qid := "" // Queue ID can be empty in policy request.
-		if len(rMap["queue_id"]) > 0 {
-			qid = rMap["queue_id"] + ": "
+		qid := "" // Queue ID can be empty in policy request, log it if presented.
+		if len(reqMap["queue_id"]) > 0 {
+			qid = reqMap["queue_id"] + ": "
 		}
 		_log(fmt.Sprintf(
 			"%vgrey list check: client %v, sender %v, recipient %v, checksum %x",
-			qid, rMap["client_address"], rMap["sender"], rMap["recipient"], msg_key))
+			qid, client_address, sender, recipient, msg_key))
 	}
 
 	switch _cfg["grey_list_store"] {
@@ -200,6 +213,7 @@ func check_RCPT(rMap map[string]string) string {
 	return DEFAULT_ACTION
 }
 
+// GOROUTINE: creates and then periodically checks internal grey list
 func clean_grey_map() {
 	_mutex.Lock()
 	_, found := _go_routines_run["clean_grey_map"]
@@ -242,6 +256,18 @@ func clean_grey_map() {
 		}
 		_grey_map_mutex.Unlock()
 		_log(fmt.Sprintf("internal greylist cleaner: %v greylist entries deleted in %v", deleted, time.Now().Sub(start_time)))
+	}
+}
+
+// Get command line parameters
+func command_line_get() {
+	flag.StringVar(&_cfg_file_name, "c", DEFAULT_CFG_FNAME, "Set configuration file name")
+	flagVersion := flag.Bool("v", false, "Show version information and exit")
+	flag.Parse()
+
+	if *flagVersion {
+		fmt.Println(PROG_NAME, VERSION, runtime.Version())
+		os.Exit(0)
 	}
 }
 
@@ -379,6 +405,7 @@ func set_mc_client() {
 
 func _check(e *error) {
 	if *e != nil {
+		_log("Fatal:", *e)
 		fmt.Println("Fatal:", *e)
 		os.Exit(1)
 	}
@@ -392,13 +419,10 @@ func _log(v ...interface{}) {
 }
 
 func _log_debug(v ...interface{}) {
-	if !LOG_DEBUG {
-		return
+	if LOG_DEBUG {
+		fmt.Printf("%v %v %v[%v]: ", _now(), _hostname, PROG_NAME, _PID)
+		fmt.Println(v...)
 	}
-	//_log_mutex.Lock()
-	fmt.Printf("%v %v %v[%v]: ", _now(), _hostname, PROG_NAME, _PID)
-	fmt.Println(v...)
-	//_log_mutex.Unlock()
 }
 
 func _now() string {

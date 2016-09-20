@@ -1,4 +1,0 @@
-#!/bin/bash 
-
-echo Build $(git describe --tags)
-go build gopp.go config.go && strip gopp
