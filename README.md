@@ -20,7 +20,6 @@ cp scripts/gopp.conf.upstart /etc/init
 if you prefer Upstart or
 ```bash
 cp scripts/init_d.ubuntu /etc/init.d/gopp
-
 update-rc.d gopp defaults
 ```
 in case of System V startup scripts are preferred.
