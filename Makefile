@@ -1,6 +1,5 @@
 gopp: gopp.go config.go
 	go build $+
-	strip gopp
 
 install: gopp
-	cp gopp /usr/local/sbin/gopp
+	install -s -m 0555 -o root -g bin -T gopp /usr/local/sbin/gopp
