@@ -25,7 +25,7 @@ import (
 
 const (
 	PROG_NAME             string        = "gopp"
-	VERSION string = "v0.2.4-15-g24138fc"
+	VERSION               string        = "v0.2.4-16-g62ec08b"
 	DEFAULT_CFG_FNAME     string        = "/etc/postfix/gopp.cfg"
 	DEFAULT_ACTION        string        = "DUNNO"
 	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
@@ -71,6 +71,11 @@ func init() {
 		_hostname = "localhost"
 	}
 
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %v -c CONFIG_FILE\n\n", PROG_NAME)
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "  -h, -help, --help\n\tShow this help page\n")
+	}
 	command_line_get()
 	read_config()
 }
@@ -262,7 +267,7 @@ func clean_grey_map() {
 // Get command line parameters
 func command_line_get() {
 	flag.StringVar(&_cfg_file_name, "c", DEFAULT_CFG_FNAME, "Set configuration file name")
-	flagVersion := flag.Bool("v", false, "Show version information and exit")
+	flagVersion := flag.Bool("version", false, "Show version information and exit")
 	flag.Parse()
 
 	if *flagVersion {
