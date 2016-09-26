@@ -9,7 +9,7 @@ sudo make install
 ```
 to build gopp and install it into /usr/local/sbin directory
 
-If your are use Debian/Ubibtu you also need to copy defaults to /etc:
+If your use Debian/Ubibtu you also need to copy defaults to /etc:
 ```bash
 cp scripts/gopp-etc_default /etc/defaults/gopp
 ```
