@@ -1,0 +1,2 @@
+SETUID=nobody
+SETGID=nobody

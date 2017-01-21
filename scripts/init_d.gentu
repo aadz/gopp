@@ -1,0 +1,21 @@
+#!/sbin/runscript
+
+NAME=gopp
+DAEMON=/usr/local/sbin/$NAME
+PIDFILE=/var/run/$NAME.pid
+
+start() {
+        ebegin "Postfix policy service starting..."
+        start-stop-daemon --start --pidfile $PIDFILE --make-pidfile --background \
+                --user $SETUID:$SETGID --exec $DAEMON
+        RETVAL="$?"
+        #echo $! > $PIDFILE
+        eend $RETVAL
+}
+stop() {
+        ebegin "Postfix policy service stop..."
+        start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE
+        RETVAL="$?"
+        rm -f $PIDFILE
+        eend $RETVAL
+}
