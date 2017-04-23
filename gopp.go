@@ -495,7 +495,7 @@ func _stat() {
 			str_grey_map_cnt = fmt.Sprintf(", greylisted %v", greylisted)
 		}
 
-		_log(fmt.Sprintf("statistics: interval %v, conections %v (%.4f p/s), requests %v (%.4f p/s, %v avg p/req)%v",
+		_log(fmt.Sprintf("statistics: interval %v, connections %v (%.4f p/s), requests %v (%.4f p/s, %v avg p/req)%v",
 			STAT_INTERVAL, conn_cnt, float32(conn_cnt)/interval, requests_cnt,
 			float32(requests_cnt)/interval, request_avg_duration, str_grey_map_cnt))
 	}
