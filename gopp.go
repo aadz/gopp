@@ -268,7 +268,7 @@ func clean_grey_map() {
 func command_line_get() {
 	flag.StringVar(&_cfg_file_name, "c", DEFAULT_CFG_FNAME, "Set configuration file name.")
 	flagShortVersion := flag.Bool("v", false, "Show version information and exit.")
-	flagVersion := flag.Bool("V", false, "Show version information about the programm and Go runtime, then exit.")
+	flagVersion := flag.Bool("V", false, "Show version information of the programm and Go runtime, then exit.")
 	flag.Parse()
 
 	if *flagVersion {
