@@ -28,7 +28,7 @@ const (
 	VERSION               string        = "v0.2.4-21-gfd5532f"
 	DEFAULT_CFG_FNAME     string        = "/etc/postfix/gopp.cfg"
 	DEFAULT_ACTION        string        = "DUNNO"
-	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try later"
+	GREYLIST_DEFER_ACTION string        = "DEFER_IF_PERMIT Greylisted for %v seconds please try again"
 	GREYLIST_PREFIX       string        = "GrlstPlc"
 	CLEANER_INTERVAL      time.Duration = 300 * time.Second
 )
